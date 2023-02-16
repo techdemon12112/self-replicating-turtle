@@ -1,0 +1,97 @@
+-- Check fuel level and fuel up if necessary
+function checkFuel()
+  local fuelLevel = turtle.getFuelLevel()
+  if fuelLevel < 1000 then
+    print("Fuel level low, refueling...")
+    for i=1,16 do
+      turtle.select(i)
+      if turtle.refuel(0) then
+        local newFuelLevel = turtle.getFuelLevel()
+        if newFuelLevel > fuelLevel then
+          print("Refueled with",turtle.getItemCount(),"items")
+          break
+        end
+      end
+    end
+  end
+end
+
+-- Check for crafting table and diamond pickaxe, and equip if available
+function checkInventory()
+  local hasPickaxe = false
+  local hasCraftingTable = false
+  for i=1,16 do
+    local item = turtle.getItemDetail(i)
+    if item then
+      if item.name == "minecraft:diamond_pickaxe" and not hasPickaxe then
+        hasPickaxe = true
+        turtle.select(i)
+        turtle.equipRight()
+      elseif item.name == "minecraft:crafting_table" and not hasCraftingTable then
+        hasCraftingTable = true
+        turtle.select(i)
+        turtle.equipLeft()
+      end
+    end
+  end
+  if not hasPickaxe or not hasCraftingTable then
+    print("Missing pickaxe or crafting table")
+    return false
+  end
+  return true
+end
+
+-- Search for logs and break them
+function searchForLogs()
+  local xPos, yPos, zPos = 0, 0, 0
+  local xDir, zDir = 0, -1
+  local xLimit, zLimit = 1, 1
+  local foundLogs = false
+  while true do
+    for x=1,xLimit do
+      for z=1,zLimit do
+        if x == 1 and z == 1 then -- center of search
+          yPos = 0
+        else
+          yPos = -1
+        end
+        while true do
+          local blockType, blockData = turtle.inspectUp()
+          if blockType and (string.find(blockType,"log") or string.find(blockType,"stem")) then
+            turtle.digUp()
+            turtle.up()
+            foundLogs = true
+          else
+            break
+          end
+        end
+        turtle.turnRight()
+        turtle.dig()
+        turtle.forward()
+        turtle.turnLeft()
+      end
+      xDir, zDir = -zDir, xDir
+    end
+    if not foundLogs then
+      print("No logs found, waiting...")
+      os.sleep(300) -- wait 5 minutes
+    else
+      foundLogs = false
+    end
+    xLimit = xLimit + 1
+    zLimit = zLimit + 1
+  end
+end
+
+-- Craft sticks and crafting table
+function craftItems()
+  -- check if slots 1, 2, 3, 5, 6, 7, 9, 10, and 11 are empty
+  for i=1,16 do
+    if i == 4 or i == 8 or i == 12 or i == 13 or i == 14 or i == 15 or i == 16 then
+      if turtle.getItemCount(i) > 0 then
+        print("Slots 1, 2, 3, 5, 6, 7, 9, 10, and 11 not empty")
+        return false
+      end
+    end
+  end
+  --
